@@ -13,6 +13,7 @@ env:
   AZURE_RG: RG2
   AZURE_SUBSCRIPTION: 7a33af83-9926-481a-8c51-6f1bc7179076
   AZURE-LOCATION: WestEurope
+  AZURE-WEBAPP-NAME: <<REPLACE>>-mywebapp-dev
 jobs:
   Build-Job:
     runs-on: ubuntu-latest
@@ -58,3 +59,38 @@ jobs:
         with:
           inlineScript: 
             az group create --name ${{ env.AZURE_RG }} --location ${{ env.AZURE-LOCATION }}
+  Dev-Job:
+    runs-on: ubuntu-latest
+    environment: development
+    needs: [ RG-Job ]
+    steps:
+    - name: Download Templates
+      uses: actions/download-artifact@v3
+      with:
+        name: templates_artifact
+        path: ${{ runner.temp }}/templates
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Deploy BICEP template
+      uses: azure/arm-deploy@v1
+      id: deploywebappd
+      with:
+        deploymentName: create-webapp
+        subscriptionId: ${{ env.AZURE_SUBSCRIPTION }}
+        resourceGroupName: ${{ env.AZURE_RG }}
+        template: ${{ runner.temp }}/templates/webapp.bicep
+        parameters: location=${{ ENV.AZURE-LOCATION }} appName=${{env.AZURE-WEBAPP-NAME}}  
+    - name: Download Publish
+      uses: actions/download-artifact@v3
+      with:
+        name: publish_artifact
+        path: ${{ runner.temp }}/publish
+    - name: Azure WebApp
+      uses: Azure/webapps-deploy@v2
+      with:
+        app-name: ${{ steps.deploywebappd.outputs.webappname }}
+        # app-name: ${{ env.AZURE-WEBAPP-NAME }}
+        package: ${{ runner.temp }}/publish
+        
