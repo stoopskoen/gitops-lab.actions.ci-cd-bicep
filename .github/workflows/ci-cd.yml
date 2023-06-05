@@ -11,7 +11,7 @@ on:
     branches: [ "main" ]
 env:
   AZURE_RG: RG2
-  AZURE_SUBSCRIPTION: eab8e5e8-8d87-4cce-b7db-8abda8247d72
+  AZURE_SUBSCRIPTION: 7a33af83-9926-481a-8c51-6f1bc7179076
   AZURE-LOCATION: WestEurope
 jobs:
   Build-Job:
